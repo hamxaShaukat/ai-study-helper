@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { UploadedFile } from '../types/types';
 import { SparklesIcon, FileUploadIcon, PdfFileIcon, TrashIcon } from './icons';
+import { FileType } from 'lucide-react';
 
 interface InputViewProps {
   onFilesUpload: (files: FileList) => void;
@@ -54,8 +55,7 @@ const InputView: React.FC<InputViewProps> = ({
     if (files && files.length > 0) {
       onFilesUpload(files);
     }
-    // Reset input to allow re-uploading the same file
-    if(fileInputRef.current) {
+    if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
   };
@@ -68,25 +68,41 @@ const InputView: React.FC<InputViewProps> = ({
   const hasFiles = uploadedFiles.length > 0;
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 md:p-8 flex flex-col items-center">
-      <div className="text-center">
-         <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-500">
-            AI Study Helper
+    <div className="w-full max-w-4xl mx-auto p-6 flex flex-col items-center relative">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-black/5 rounded-full blur-xl animate-float-slow"></div>
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-black/3 rounded-full blur-xl animate-float-medium"></div>
+        <div className="absolute top-1/3 left-1/4 w-40 h-40 bg-black/8 rounded-full blur-lg animate-float-fast"></div>
+      </div>
+
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 bg-black/5 rounded-2xl flex items-center justify-center">
+            <FileType className="w-10 h-10 text-gray-700" />
+          </div>
+        </div>
+        <h1 className="text-5xl font-bold text-gray-900 mb-4">
+          AI Study Assistant
         </h1>
-        <p className="mt-4 text-lg text-slate-400">
-            Upload your study material in PDF format, and let AI create summaries, flashcards, and quizzes for you.
+        <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
+          Upload your PDF documents and instantly generate summaries, flashcards, and quizzes to enhance your learning experience.
         </p>
       </div>
 
-      <div className="w-full mt-10">
+      <div className="w-full max-w-2xl">
+        {/* Upload Area */}
         <div
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={openFilePicker}
-          className={`relative w-full h-48 flex flex-col justify-center items-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-300 ${
-            isDragging ? 'border-sky-400 bg-sky-900/30' : 'border-slate-600 hover:border-sky-500 hover:bg-slate-800/50'
+          className={`relative w-full h-48 flex flex-col justify-center items-center p-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 bg-white ${
+            isDragging 
+              ? 'border-black bg-gray-50 shadow-lg' 
+              : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
           }`}
         >
           <input
@@ -98,67 +114,117 @@ const InputView: React.FC<InputViewProps> = ({
             onChange={handleFileSelect}
             disabled={isLoading}
           />
-          <FileUploadIcon className="w-12 h-12 text-slate-500 mb-2" />
-          <p className="text-slate-400 font-semibold">
-            Drag & drop PDF files here, or <span className="text-sky-400">browse</span>
+          
+          <div className={`p-4 rounded-2xl mb-4 transition-colors ${
+            isDragging ? 'bg-black/5' : 'bg-gray-100'
+          }`}>
+            <FileUploadIcon className="w-8 h-8 text-gray-600" />
+          </div>
+          
+          <p className="text-gray-700 font-semibold text-lg mb-2">
+            Drag & drop PDF files here
           </p>
-          <p className="text-sm text-slate-500">Supports multiple PDFs</p>
+          <p className="text-gray-500">
+            or <span className="text-black font-medium underline">browse your files</span>
+          </p>
+          <p className="text-sm text-gray-400 mt-2">Multiple PDFs supported</p>
         </div>
 
+        {/* Loading State */}
         {isParsing && (
-            <div className="text-center mt-4 text-sky-300 flex items-center justify-center gap-2">
-                 <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Parsing PDF(s)...
-            </div>
+          <div className="flex items-center justify-center gap-3 mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-blue-700 font-medium">Processing PDF documents...</span>
+          </div>
         )}
 
+        {/* Uploaded Files List */}
         {hasFiles && (
-          <div className="w-full mt-6 bg-slate-800/50 border border-slate-700 rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-slate-300 mb-3 px-2">Uploaded Documents</h3>
-            <ul className="space-y-2">
+          <div className="w-full mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Uploaded Documents ({uploadedFiles.length})
+              </h3>
+            </div>
+            
+            <div className="space-y-3">
               {uploadedFiles.map((file) => (
-                <li key={file.name} className="flex items-center justify-between p-2 rounded-md bg-slate-700/50 hover:bg-slate-700 transition-colors">
-                  <div className="flex items-center gap-3 truncate">
-                    <PdfFileIcon className="w-5 h-5 text-red-400 flex-shrink-0" />
-                    <span className="text-slate-200 truncate">{file.name}</span>
+                <div key={file.name} className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-200 border border-gray-200">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="p-2 bg-red-50 rounded-lg">
+                      <PdfFileIcon className="w-5 h-5 text-red-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-gray-900 font-medium truncate">{file.name}</p>
+                      <p className="text-gray-500 text-sm">
+                        {file.text.length > 100 ? `${file.text.substring(0, 100)}...` : file.text}
+                      </p>
+                    </div>
                   </div>
                   <button 
                     onClick={() => onFileDelete(file.name)} 
                     disabled={isLoading}
-                    className="p-1 rounded-full text-slate-400 hover:bg-slate-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label={`Remove ${file.name}`}
                   >
                     <TrashIcon className="w-5 h-5" />
                   </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
+        {/* Generate Button */}
         <button
           onClick={onRequestGenerate}
           disabled={isLoading || !hasFiles}
-          className="mt-6 w-full flex items-center justify-center gap-3 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100"
+          className={`mt-8 w-full flex items-center justify-center gap-4 py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
+            !isLoading && hasFiles
+              ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+          }`}
         >
           {isGenerating ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Generating...
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Generating Study Materials...</span>
             </>
           ) : (
-             <>
-                <SparklesIcon className="w-5 h-5" />
-                Generate Study Aids
-             </>
+            <>
+              <SparklesIcon className="w-6 h-6" />
+              <span>Generate Study Materials</span>
+            </>
           )}
         </button>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+          <div className="text-center p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileType className="w-6 h-6 text-blue-600" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Smart Summaries</h4>
+            <p className="text-gray-600 text-sm">Get concise, detailed, and comprehensive summaries</p>
+          </div>
+          
+          <div className="text-center p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <SparklesIcon className="w-6 h-6 text-green-600" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Interactive Flashcards</h4>
+            <p className="text-gray-600 text-sm">Flip through key concepts and definitions</p>
+          </div>
+          
+          <div className="text-center p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileType className="w-6 h-6 text-purple-600" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Practice Quizzes</h4>
+            <p className="text-gray-600 text-sm">Test your knowledge with MCQs and short answers</p>
+          </div>
+        </div>
       </div>
     </div>
   );

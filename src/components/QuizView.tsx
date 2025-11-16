@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import type { MCQ } from '../types/types';
 import { RefreshCwIcon } from './icons';
+import { CircleCheckBig, Lightbulb } from 'lucide-react';
 
 interface MCQCardProps {
   mcq: MCQ;
@@ -19,46 +19,69 @@ const MCQCard: React.FC<MCQCardProps> = ({ mcq, index }) => {
   
   const getOptionClass = (option: string) => {
       if (!showAnswer) {
-          return selectedOption === option ? 'bg-sky-600' : 'bg-slate-700 hover:bg-slate-600';
+          return selectedOption === option 
+            ? 'bg-black text-white border-black shadow-md' 
+            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:shadow-sm';
       }
       if (option === mcq.answer) {
-          return 'bg-green-600';
+          return 'bg-green-500 text-white border-green-500 shadow-md';
       }
       if (option === selectedOption && option !== mcq.answer) {
-          return 'bg-red-600';
+          return 'bg-red-500 text-white border-red-500 shadow-md';
       }
-      return 'bg-slate-700';
+      return 'bg-white text-gray-700 border-gray-300';
   };
 
   return (
-    <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-      <p className="font-semibold text-slate-300">
-        <span className="text-sky-400 mr-2">{index + 1}.</span>
-        {mcq.question}
-      </p>
-      <div className="mt-4 space-y-3">
+    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="flex items-start gap-3 mb-4">
+        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+          {index + 1}
+        </div>
+        <p className="text-lg font-medium text-gray-900 leading-relaxed">
+          {mcq.question}
+        </p>
+      </div>
+      
+      <div className="space-y-3">
         {mcq.options.map((option, i) => (
           <button
             key={i}
             onClick={() => handleOptionClick(option)}
-            className={`w-full text-left p-3 rounded-md transition-colors duration-200 ${getOptionClass(option)}`}
+            className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 font-medium ${getOptionClass(option)}`}
           >
             {option}
           </button>
         ))}
       </div>
-      <div className="mt-4 text-right">
+      
+      {showAnswer && (
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Lightbulb className="w-5 h-5 text-blue-600" />
+            <span className="font-semibold text-blue-900">Explanation</span>
+          </div>
+          <p className="text-blue-800">answer</p>
+        </div>
+      )}
+      
+      <div className="mt-6 flex justify-between items-center">
         <button 
           onClick={() => setShowAnswer(!showAnswer)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm font-medium transition-colors"
+          className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors duration-200 border border-gray-300"
         >
-          {showAnswer ? 'Hide' : 'Show'} Answer
+          {showAnswer ? 'Hide Answer' : 'Reveal Answer'}
         </button>
+        
+        {selectedOption && !showAnswer && (
+          <div className="text-sm text-gray-500">
+            Selected: <span className="font-medium">{selectedOption}</span>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
 
 interface QuizViewProps {
     mcqs: MCQ[];
@@ -70,48 +93,78 @@ interface QuizViewProps {
 const QuizView: React.FC<QuizViewProps> = ({ mcqs, shortQuestions, onRegenerate, isRegenerating }) => {
   return (
     <div className="space-y-12">
+      {/* Multiple Choice Section */}
       <div>
-        <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-bold text-sky-400">Multiple Choice Questions</h3>
+        <div className="flex justify-between items-center mb-8">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Multiple Choice Questions</h3>
+              <p className="text-gray-600">Test your knowledge with interactive questions</p>
+            </div>
             <button 
                 onClick={onRegenerate}
                 disabled={isRegenerating}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-3 px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 hover:border-gray-400 shadow-sm hover:shadow-md"
             >
                 {isRegenerating ? (
                     <>
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
                         <span>Generating...</span>
                     </>
                 ) : (
                     <>
                         <RefreshCwIcon className="w-5 h-5" />
-                        <span>Generate Again</span>
+                        <span>New Questions</span>
                     </>
                 )}
             </button>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {mcqs.map((mcq, index) => (
-            <MCQCard key={index} mcq={mcq} index={index} />
-          ))}
-        </div>
+        
+        {mcqs.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CircleCheckBig className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-gray-500 text-lg">No questions generated yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {mcqs.map((mcq, index) => (
+              <MCQCard key={index} mcq={mcq} index={index} />
+            ))}
+          </div>
+        )}
       </div>
+      
+      {/* Short Answer Section */}
       <div>
-        <h3 className="text-2xl font-bold text-sky-400 mb-6">Short Answer Questions</h3>
-        <div className="space-y-4">
+        <div className="mb-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">Short Answer Questions</h3>
+          <p className="text-gray-600">Practice explaining concepts in your own words</p>
+        </div>
+        
+        {shortQuestions.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-2xl border border-gray-200">
+            <p className="text-gray-500 text-lg">No short answer questions available.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
             {shortQuestions.map((question, index) => (
-                <div key={index} className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <p className="text-slate-300">
-                        <span className="text-sky-400 mr-2">{index + 1}.</span>
-                        {question}
-                    </p>
+                <div key={index} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-gray-900 font-medium mb-3">{question}</p>
+                      <div className="h-20 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50/50 flex items-center justify-center">
+                        <span className="text-gray-400">Write your answer here...</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
             ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

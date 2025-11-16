@@ -4,6 +4,7 @@ import LoadingSpinner from './LoadingSpinner';
 import Flashcard from './Flashcard';
 import QuizView from './QuizView';
 import { BookOpenIcon, LayersIcon, CheckCircleIcon, ArrowLeftIcon, ArrowRightIcon } from './icons';
+import { House } from 'lucide-react';
 
 interface ResultsViewProps {
   content: GeneratedContent;
@@ -22,10 +23,10 @@ const TabButton: React.FC<{
 }> = ({ label, icon, isActive, onClick }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold rounded-t-lg border-b-2 transition-all ${
+        className={`flex items-center gap-3 px-6 py-4 text-base font-semibold border-b-2 transition-all duration-300 ${
             isActive
-                ? 'border-sky-400 text-sky-300 bg-slate-800'
-                : 'border-transparent text-slate-400 hover:text-sky-300'
+                ? 'border-black text-gray-900 bg-white shadow-sm'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
         }`}
     >
         {icon}
@@ -45,22 +46,33 @@ const FlashcardViewer: React.FC<{ cards: FlashcardType[] }> = ({ cards }) => {
     };
     
     if (!cards || cards.length === 0) {
-        return <p className="text-slate-400">No flashcards were generated.</p>;
+        return (
+            <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <LayersIcon className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 text-lg">No flashcards were generated.</p>
+            </div>
+        );
     }
 
     return (
-        <div className="w-full flex flex-col items-center gap-6 animate-fade-in">
+        <div className="w-full flex flex-col items-center gap-8 animate-fade-in">
             <Flashcard key={currentIndex} card={cards[currentIndex]} />
-            <div className="text-center">
-                <p className="text-slate-300 font-medium">
-                    Card {currentIndex + 1} of {cards.length}
-                </p>
+            
+            <div className="flex items-center gap-6">
+                <div className="text-center">
+                    <p className="text-gray-600 font-medium text-sm">
+                        Card {currentIndex + 1} of {cards.length}
+                    </p>
+                </div>
             </div>
+
             <div className="flex items-center gap-4">
                 <button
                     onClick={goToPrevious}
                     disabled={currentIndex === 0}
-                    className="flex items-center gap-2 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-3 px-6 py-3 bg-white border border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                     aria-label="Previous card"
                 >
                     <ArrowLeftIcon className="w-5 h-5"/>
@@ -69,7 +81,7 @@ const FlashcardViewer: React.FC<{ cards: FlashcardType[] }> = ({ cards }) => {
                 <button
                     onClick={goToNext}
                     disabled={currentIndex === cards.length - 1}
-                    className="flex items-center gap-2 px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-3 px-6 py-3 bg-black hover:bg-gray-800 text-white font-medium rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                     aria-label="Next card"
                 >
                     <span>Next</span>
@@ -80,7 +92,6 @@ const FlashcardViewer: React.FC<{ cards: FlashcardType[] }> = ({ cards }) => {
     );
 };
 
-
 const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onReset, onRegenerateQuiz }) => {
   const [activeTab, setActiveTab] = useState<Tab>('summary');
 
@@ -88,32 +99,55 @@ const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onRes
     switch (activeTab) {
       case 'summary':
         return (
-          loadingStates.summaries ? <LoadingSpinner size={12} /> : content.summaries && (
-            <div className="space-y-8 animate-fade-in">
-              <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-xl font-bold text-sky-400">Short Summary</h3>
-                <p className="mt-2 text-slate-300">{content.summaries.short}</p>
+          loadingStates.summaries ? (
+            <div className="flex justify-center items-center py-20">
+              <LoadingSpinner size={12} />
+            </div>
+          ) : content.summaries && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <h3 className="text-xl font-bold text-gray-900">Brief Overview</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed text-lg">{content.summaries.short}</p>
               </div>
-              <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-xl font-bold text-sky-400">Medium Summary</h3>
-                <p className="mt-2 text-slate-300">{content.summaries.medium}</p>
+              
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <h3 className="text-xl font-bold text-gray-900">Detailed Summary</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{content.summaries.medium}</p>
               </div>
-              <div className="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h3 className="text-xl font-bold text-sky-400">Long Summary</h3>
-                <p className="mt-2 text-slate-300">{content.summaries.long}</p>
+              
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                  <h3 className="text-xl font-bold text-gray-900">Comprehensive Analysis</h3>
+                </div>
+                <p className="text-gray-700 leading-relaxed">{content.summaries.long}</p>
               </div>
             </div>
           )
         );
       case 'flashcards':
         return (
-          loadingStates.flashcards ? <LoadingSpinner size={12} /> : (
+          loadingStates.flashcards ? (
+            <div className="flex justify-center items-center py-20">
+              <LoadingSpinner size={12} />
+            </div>
+          ) : (
             <FlashcardViewer cards={content.flashcards || []} />
           )
         );
       case 'quiz':
         if (loadingStates.quiz && !content.quiz) {
-            return <LoadingSpinner size={12} />; // Only show spinner on initial load
+            return (
+              <div className="flex justify-center items-center py-20">
+                <LoadingSpinner size={12} />
+              </div>
+            );
         }
         if (content.quiz) {
             return (
@@ -134,22 +168,55 @@ const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onRes
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-white">Your Study Aids</h2>
-        <button onClick={onReset} className="bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
-            Start Over
+    <div className="w-full max-w-6xl mx-auto p-6 relative">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-10 right-10 w-40 h-40 bg-black/3 rounded-full blur-xl animate-float-slow"></div>
+        <div className="absolute bottom-10 left-10 w-32 h-32 bg-black/5 rounded-full blur-lg animate-float-medium"></div>
+      </div>
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-4xl font-bold text-gray-900 mb-2">Study Materials</h2>
+          <p className="text-gray-600">AI-generated study aids from your document</p>
+        </div>
+        <button 
+          onClick={onReset} 
+          className="flex items-center gap-2 bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-xl transition-all duration-300 border border-gray-300 hover:border-gray-400 shadow-sm hover:shadow-md"
+        >
+          <House className="w-5 h-5" />
+          New Document
         </button>
       </div>
 
-      <div className="border-b border-slate-700 flex">
-        <TabButton label="Summary" icon={<BookOpenIcon className="w-5 h-5"/>} isActive={activeTab === 'summary'} onClick={() => setActiveTab('summary')} />
-        <TabButton label="Flashcards" icon={<LayersIcon className="w-5 h-5"/>} isActive={activeTab === 'flashcards'} onClick={() => setActiveTab('flashcards')} />
-        <TabButton label="Quiz" icon={<CheckCircleIcon className="w-5 h-5"/>} isActive={activeTab === 'quiz'} onClick={() => setActiveTab('quiz')} />
-      </div>
+      {/* Tab Navigation */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-8">
+        <div className="flex border-b border-gray-200">
+          <TabButton 
+            label="Summary" 
+            icon={<BookOpenIcon className="w-5 h-5"/>} 
+            isActive={activeTab === 'summary'} 
+            onClick={() => setActiveTab('summary')} 
+          />
+          <TabButton 
+            label="Flashcards" 
+            icon={<LayersIcon className="w-5 h-5"/>} 
+            isActive={activeTab === 'flashcards'} 
+            onClick={() => setActiveTab('flashcards')} 
+          />
+          <TabButton 
+            label="Quiz" 
+            icon={<CheckCircleIcon className="w-5 h-5"/>} 
+            isActive={activeTab === 'quiz'} 
+            onClick={() => setActiveTab('quiz')} 
+          />
+        </div>
 
-      <div className="mt-8 min-h-[400px] flex justify-center items-start w-full">
-        {renderContent()}
+        {/* Content Area */}
+        <div className="p-8 min-h-[500px] flex justify-center items-start w-full bg-gray-50/50 rounded-b-2xl">
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
