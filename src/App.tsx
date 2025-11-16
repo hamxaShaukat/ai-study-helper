@@ -37,7 +37,6 @@ const App: React.FC = () => {
   const isGenerating = Object.values(loadingStates).some(Boolean);
 
   useEffect(() => {
-    // Use the local worker file from node_modules
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
       "pdfjs-dist/build/pdf.worker.min.js",
       import.meta.url
@@ -211,8 +210,16 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center font-sans">
-      <main className="w-full flex-grow flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center font-sans relative overflow-hidden">
+      {/* Black & White Blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-black/5 rounded-full blur-xl animate-float-slow"></div>
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-black/3 rounded-full blur-xl animate-float-medium"></div>
+        <div className="absolute top-1/3 left-1/4 w-40 h-40 bg-black/8 rounded-full blur-lg animate-float-fast"></div>
+        <div className="absolute bottom-1/4 right-1/3 w-32 h-32 bg-black/10 rounded-full blur-md animate-float-slow"></div>
+      </div>
+
+      <main className="w-full flex-grow flex items-center justify-center p-6 relative z-10">
         {view === "input" ? (
           <InputView
             onFilesUpload={handleFilesUpload}
@@ -231,26 +238,36 @@ const App: React.FC = () => {
           />
         )}
       </main>
+
       <SelectionDialog
         isOpen={isSelectionDialogOpen}
         files={uploadedFiles}
         onClose={() => setIsSelectionDialogOpen(false)}
         onGenerate={handleGenerate}
       />
+
       {error && (
-        <div className="fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-lg max-w-sm z-50 animate-fade-in-up">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="font-bold">Error Occurred</h4>
+        <div className="fixed bottom-6 right-6 bg-white text-gray-900 p-6 rounded-2xl shadow-2xl max-w-sm z-50 animate-fade-in-up border border-gray-200">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              <h4 className="font-bold text-gray-900">Error</h4>
+            </div>
             <button
               onClick={() => setError(null)}
-              className="text-xl font-light leading-none"
+              className="text-gray-500 hover:text-gray-700 transition-colors text-xl font-light leading-none p-1 rounded-full hover:bg-gray-100"
             >
               &times;
             </button>
           </div>
-          <pre className="whitespace-pre-wrap text-sm">{error}</pre>
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 font-medium">{error}</pre>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="py-6 text-center text-gray-500 text-sm relative z-10">
+        <p>AI Study Assistant • Transform PDFs into study materials</p>
+      </footer>
     </div>
   );
 };
