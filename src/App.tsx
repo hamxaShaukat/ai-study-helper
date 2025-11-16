@@ -219,7 +219,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-1/4 right-1/3 w-32 h-32 bg-black/10 rounded-full blur-md animate-float-slow"></div>
       </div>
 
-      <main className="w-full flex-grow flex items-center justify-center p-6 relative z-10">
+      <main className="w-full grow flex items-center justify-center p-6 relative z-10">
         {view === "input" ? (
           <InputView
             onFilesUpload={handleFilesUpload}

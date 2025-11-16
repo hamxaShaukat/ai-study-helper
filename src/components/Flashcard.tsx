@@ -24,16 +24,16 @@ const Flashcard: React.FC<FlashcardProps> = ({ card }) => {
 
   return (
     <div 
-      className="w-full max-w-2xl h-96 [perspective:1000px] cursor-pointer group"
+      className="w-full max-w-2xl h-96 perspective-[1000px] cursor-pointer group"
       onClick={handleFlip}
     >
       <div
         className={`relative w-full h-full transition-transform duration-700 ease-in-out rounded-3xl shadow-2xl ${
-          isFlipped ? '[transform:rotateY(180deg)]' : ''
-        } [transform-style:preserve-3d]`}
+          isFlipped ? 'transform-[rotateY(180deg)]' : ''
+        } transform-3d`}
       >
         {/* Front Side */}
-        <div className="absolute w-full h-full [backface-visibility:hidden] bg-white rounded-3xl p-8 flex flex-col justify-center items-center text-center border-2 border-gray-200 shadow-lg">
+        <div className="absolute w-full h-full backface-hidden bg-white rounded-3xl p-8 flex flex-col justify-center items-center text-center border-2 border-gray-200 shadow-lg">
           <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full border border-blue-200">
             <Lightbulb className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-semibold text-blue-700">QUESTION</span>
@@ -52,7 +52,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ card }) => {
         </div>
 
         {/* Back Side */}
-        <div className="absolute w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-gray-900 rounded-3xl p-8 flex flex-col justify-center items-center text-center border-2 border-gray-700 shadow-2xl">
+        <div className="absolute w-full h-full backface-hidden transform-[rotateY(180deg)] bg-gray-900 rounded-3xl p-8 flex flex-col justify-center items-center text-center border-2 border-gray-700 shadow-2xl">
           <div className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-green-500/20 rounded-full border border-green-500/30">
             <span className="text-sm font-semibold text-green-400">ANSWER</span>
           </div>

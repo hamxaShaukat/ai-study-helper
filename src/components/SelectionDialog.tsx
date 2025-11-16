@@ -58,7 +58,7 @@ const SelectionDialog: React.FC<SelectionDialogProps> = ({ isOpen, files, onClos
         {/* Content */}
         <div className="p-8 max-h-[60vh] overflow-y-auto">
           <div className="grid gap-3">
-            {files.map((file, index) => (
+            {files.map((file) => (
               <div
                 key={file.name}
                 className={`relative p-5 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${

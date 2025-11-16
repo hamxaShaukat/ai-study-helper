@@ -35,7 +35,7 @@ const MCQCard: React.FC<MCQCardProps> = ({ mcq, index }) => {
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
       <div className="flex items-start gap-3 mb-4">
-        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-sm font-bold shrink-0">
           {index + 1}
         </div>
         <p className="text-lg font-medium text-gray-900 leading-relaxed">
@@ -151,7 +151,7 @@ const QuizView: React.FC<QuizViewProps> = ({ mcqs, shortQuestions, onRegenerate,
             {shortQuestions.map((question, index) => (
                 <div key={index} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
                   <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
+                    <div className="w-8 h-8 bg-gray-100 text-gray-700 rounded-full flex items-center justify-center text-sm font-bold shrink-0 mt-1">
                       {index + 1}
                     </div>
                     <div className="flex-1">
