@@ -24,6 +24,7 @@ export interface GeneratedContent {
   summaries: Summaries | null;
   flashcards: Flashcard[] | null;
   quiz: Quiz | null;
+  timestamp?: Date; // Add timestamp to GeneratedContent
 }
 
 export interface UploadedFile {

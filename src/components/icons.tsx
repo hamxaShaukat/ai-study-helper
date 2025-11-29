@@ -65,3 +65,9 @@ export const RefreshCwIcon: React.FC<{ className?: string }> = ({ className = "w
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 11A8.1 8.1 0 004.5 9M4 5v4h4M4 13a8.1 8.1 0 0015.5 2m.5 4v-4h-4" />
     </svg>
 );
+
+export const SaveIcon: React.FC<{ className?: string }> = ({ className = "w-6 h-6" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3-3m3 3V4" />
+    </svg>
+);

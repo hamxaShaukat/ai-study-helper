@@ -6,22 +6,35 @@ import { FileType } from 'lucide-react';
 interface InputViewProps {
   onFilesUpload: (files: FileList) => void;
   onFileDelete: (fileName: string) => void;
-  onRequestGenerate: () => void;
+  onRequestGenerate: (generationTypes: ('summaries' | 'flashcards' | 'quiz')[]) => void;
   uploadedFiles: UploadedFile[];
   isParsing: boolean;
-  isGenerating: boolean;
+  isGenerating: { summaries: boolean; flashcards: boolean; quiz: boolean; };
 }
 
-const InputView: React.FC<InputViewProps> = ({ 
-  onFilesUpload, 
+const InputView: React.FC<InputViewProps> = ({
+  onFilesUpload,
   onFileDelete,
   onRequestGenerate,
-  uploadedFiles, 
+  uploadedFiles,
   isParsing,
   isGenerating
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedGenerationTypes, setSelectedGenerationTypes] = useState<('summaries' | 'flashcards' | 'quiz')[]>([]);
+
+  const handleGenerationTypeChange = (type: 'summaries' | 'flashcards' | 'quiz') => {
+    setSelectedGenerationTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  };
+
+  const handleGenerateClick = () => {
+    if (selectedGenerationTypes.length > 0) {
+      onRequestGenerate(selectedGenerationTypes);
+    }
+  };
 
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -64,7 +77,7 @@ const InputView: React.FC<InputViewProps> = ({
     fileInputRef.current?.click();
   };
 
-  const isLoading = isParsing || isGenerating;
+  const isLoading = isParsing || Object.values(isGenerating).some(Boolean);
   const hasFiles = uploadedFiles.length > 0;
 
   return (
@@ -84,7 +97,7 @@ const InputView: React.FC<InputViewProps> = ({
           </div>
         </div>
         <h1 className="text-5xl font-bold text-gray-900 mb-4">
-          AI Study Assistant
+          Study Smarter!
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl leading-relaxed">
           Upload your PDF documents and instantly generate summaries, flashcards, and quizzes to enhance your learning experience.
@@ -176,28 +189,64 @@ const InputView: React.FC<InputViewProps> = ({
           </div>
         )}
 
-        {/* Generate Button */}
-        <button
-          onClick={onRequestGenerate}
-          disabled={isLoading || !hasFiles}
-          className={`mt-8 w-full flex items-center justify-center gap-4 py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
-            !isLoading && hasFiles
-              ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-              : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {isGenerating ? (
-            <>
-              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Generating Study Materials...</span>
-            </>
-          ) : (
-            <>
-              <SparklesIcon className="w-6 h-6" />
-              <span>Generate Study Materials</span>
-            </>
-          )}
-        </button>
+        {/* Generate Buttons */}
+        <div className="w-full mt-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose what to generate:</h3>
+          <div className="flex flex-col space-y-3">
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedGenerationTypes.includes('summaries')}
+                onChange={() => handleGenerationTypeChange('summaries')}
+                disabled={isLoading}
+                className="form-checkbox h-5 w-5 text-purple-600 rounded focus:ring-purple-500"
+              />
+              <span className="text-gray-800 font-medium">Summaries</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedGenerationTypes.includes('flashcards')}
+                onChange={() => handleGenerationTypeChange('flashcards')}
+                disabled={isLoading}
+                className="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-500"
+              />
+              <span className="text-gray-800 font-medium">Flashcards</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedGenerationTypes.includes('quiz')}
+                onChange={() => handleGenerationTypeChange('quiz')}
+                disabled={isLoading}
+                className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-gray-800 font-medium">Quizzes</span>
+            </label>
+          </div>
+
+          <button
+            onClick={handleGenerateClick}
+            disabled={isLoading || !hasFiles || selectedGenerationTypes.length === 0}
+            className={`mt-6 w-full flex items-center justify-center gap-4 py-4 px-8 rounded-2xl font-semibold text-lg transition-all duration-300 ${
+              !isLoading && hasFiles && selectedGenerationTypes.length > 0
+                ? 'bg-black hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {(isGenerating.summaries || isGenerating.flashcards || isGenerating.quiz) ? (
+              <>
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Generating Study Materials...</span>
+              </>
+            ) : (
+              <>
+                <SparklesIcon className="w-6 h-6" />
+                <span>Generate Selected Materials</span>
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">

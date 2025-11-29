@@ -3,7 +3,7 @@ import type { GeneratedContent, Flashcard as FlashcardType } from '../types/type
 import LoadingSpinner from './LoadingSpinner';
 import Flashcard from './Flashcard';
 import QuizView from './QuizView';
-import { BookOpenIcon, LayersIcon, CheckCircleIcon, ArrowLeftIcon, ArrowRightIcon } from './icons';
+import { BookOpenIcon, LayersIcon, CheckCircleIcon, ArrowLeftIcon, ArrowRightIcon, SaveIcon } from './icons';
 import { House } from 'lucide-react';
 
 interface ResultsViewProps {
@@ -11,6 +11,9 @@ interface ResultsViewProps {
   loadingStates: { summaries: boolean; flashcards: boolean; quiz: boolean; };
   onReset: () => void;
   onRegenerateQuiz: () => void;
+  onSaveProgress: () => void; // New prop for saving progress
+  isSaving: boolean; // New prop for saving state
+  onGeneratedContentChange: (content: GeneratedContent) => void; // New prop for content change
 }
 
 type Tab = 'summary' | 'flashcards' | 'quiz';
@@ -92,8 +95,11 @@ const FlashcardViewer: React.FC<{ cards: FlashcardType[] }> = ({ cards }) => {
     );
 };
 
-const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onReset, onRegenerateQuiz }) => {
+const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onReset, onRegenerateQuiz, onSaveProgress, isSaving }) => {
   const [activeTab, setActiveTab] = useState<Tab>('summary');
+
+  // Determine if there is any generated content to save
+  const hasGeneratedContent = content.summaries || (content.flashcards && content.flashcards.length > 0) || content.quiz;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -211,6 +217,20 @@ const ResultsView: React.FC<ResultsViewProps> = ({ content, loadingStates, onRes
             isActive={activeTab === 'quiz'} 
             onClick={() => setActiveTab('quiz')} 
           />
+          {hasGeneratedContent && ( // Show save button only if content exists
+            <button
+              onClick={onSaveProgress}
+              disabled={isSaving}
+              className="ml-auto flex items-center gap-2 px-6 py-4 text-base font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-300"
+            >
+              {isSaving ? (
+                <LoadingSpinner size={4} />
+              ) : (
+                <SaveIcon className="w-5 h-5" />
+              )}
+              {isSaving ? "Saving..." : "Save Progress"}
+            </button>
+          )}
         </div>
 
         {/* Content Area */}

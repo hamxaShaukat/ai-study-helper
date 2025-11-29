@@ -7,15 +7,17 @@ interface SelectionDialogProps {
   isOpen: boolean;
   files: UploadedFile[];
   onClose: () => void;
-  onGenerate: (text: string) => void;
+  onGenerate: (text: string, generationType: 'summaries' | 'flashcards' | 'quiz') => void;
 }
 
 const SelectionDialog: React.FC<SelectionDialogProps> = ({ isOpen, files, onClose, onGenerate }) => {
   const [selectedFile, setSelectedFile] = useState<UploadedFile | null>(null);
+  const [selectedGenerationTypes, setSelectedGenerationTypes] = useState<('summaries' | 'flashcards' | 'quiz')[]>([]);
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedFile(null);
+      setSelectedGenerationTypes([]);
     } else if (files.length > 0) {
       setSelectedFile(files[0]);
     }
@@ -24,10 +26,18 @@ const SelectionDialog: React.FC<SelectionDialogProps> = ({ isOpen, files, onClos
   if (!isOpen) return null;
 
   const handleGenerateClick = () => {
-    if (selectedFile) {
-      onGenerate(selectedFile.text);
+    if (selectedFile && selectedGenerationTypes.length > 0) {
+      selectedGenerationTypes.forEach((type) => {
+        onGenerate(selectedFile.text, type);
+      });
       onClose();
     }
+  };
+
+  const handleGenerationTypeChange = (type: 'summaries' | 'flashcards' | 'quiz') => {
+    setSelectedGenerationTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
   };
 
   return (
@@ -111,6 +121,40 @@ const SelectionDialog: React.FC<SelectionDialogProps> = ({ isOpen, files, onClos
               </div>
             ))}
           </div>
+
+          {/* Generation Type Selection */}
+          <div className="mt-6 p-6 bg-gray-50 rounded-xl border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Choose what to generate:</h3>
+            <div className="flex flex-col space-y-3">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedGenerationTypes.includes('summaries')}
+                  onChange={() => handleGenerationTypeChange('summaries')}
+                  className="form-checkbox h-5 w-5 text-purple-600 rounded focus:ring-purple-500"
+                />
+                <span className="text-gray-800 font-medium">Summaries</span>
+              </label>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedGenerationTypes.includes('flashcards')}
+                  onChange={() => handleGenerationTypeChange('flashcards')}
+                  className="form-checkbox h-5 w-5 text-green-600 rounded focus:ring-green-500"
+                />
+                <span className="text-gray-800 font-medium">Flashcards</span>
+              </label>
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedGenerationTypes.includes('quiz')}
+                  onChange={() => handleGenerationTypeChange('quiz')}
+                  className="form-checkbox h-5 w-5 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-gray-800 font-medium">Quizzes</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}
@@ -124,7 +168,7 @@ const SelectionDialog: React.FC<SelectionDialogProps> = ({ isOpen, files, onClos
             </button>
             <button
               onClick={handleGenerateClick}
-              disabled={!selectedFile}
+              disabled={!selectedFile || selectedGenerationTypes.length === 0}
               className="flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-black hover:bg-gray-800 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-sm group"
             >
               
