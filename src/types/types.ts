@@ -24,10 +24,17 @@ export interface GeneratedContent {
   summaries: Summaries | null;
   flashcards: Flashcard[] | null;
   quiz: Quiz | null;
-  timestamp?: Date; // Add timestamp to GeneratedContent
+  timestamp?: Date;
 }
 
 export interface UploadedFile {
   name: string;
   text: string;
+}
+
+export interface HistoryItem {
+  id: string;
+  name: string;
+  content: GeneratedContent;
+  timestamp: Date;
 }
