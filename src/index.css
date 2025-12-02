@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+@layer utilities {
+  .custom-scrollbar {
+    scrollbar-width: thin; /* For Firefox */
+    scrollbar-color: #4A5568 #2D3748; /* thumb and track color for Firefox */
+  }
+
+  /* For Chrome, Safari, and Opera */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #2D3748; /* Track color */
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4A5568; /* Thumb color */
+    border-radius: 10px;
+    border: 2px solid #2D3748; /* Padding around thumb */
+  }
+}

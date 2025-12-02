@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { motion } from "motion/react";
-import { Sparkles, Copy, Check } from "lucide-react";
+import { motion } from "framer-motion";
+import { Sparkles, Copy, Check, AlertCircle } from "lucide-react";
 import { PDFSelectionDialog } from "../PDFSelectionDialog";
+import { generateSummaries } from "../../../services/geminiService";
 import type { UploadedFile, Summaries } from "../../../types/types";
 
 interface SummaryTabProps {
@@ -14,19 +15,29 @@ export function SummaryTab({ uploadedFiles, summaries, setSummaries }: SummaryTa
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLength, setSelectedLength] = useState<"short" | "medium" | "long">("medium");
   const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (selectedFiles: UploadedFile[]) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    // Mock generated summaries
-    const mockSummaries: Summaries = {
-      short: "This is a short summary of the selected PDFs. It provides a quick overview of the main points and key takeaways in a concise format.",
-      medium: "This is a medium-length summary of the selected PDFs. It covers the main topics, important concepts, and provides more context than the short summary. This format is ideal for getting a comprehensive understanding without too much detail.",
-      long: "This is a long, detailed summary of the selected PDFs. It includes comprehensive coverage of all major topics, detailed explanations of key concepts, supporting examples, and in-depth analysis. This format is perfect for thorough study sessions and complete understanding of the material. It covers multiple aspects and provides context for complex ideas, making it suitable for exam preparation and deep learning.",
-    };
-    
-    setSummaries(mockSummaries);
+    if (selectedFiles.length === 0) {
+      setError("Please select at least one PDF");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const combinedText = selectedFiles.map(f => f.text).join("\n\n");
+      const generatedSummaries = await generateSummaries(combinedText);
+      setSummaries(generatedSummaries);
+      setIsDialogOpen(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate summaries";
+      setError(errorMessage);
+      console.error("Error generating summaries:", err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCopy = (text: string, type: string) => {
@@ -57,6 +68,12 @@ export function SummaryTab({ uploadedFiles, summaries, setSummaries }: SummaryTa
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center"
           >
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
             <div className="inline-flex items-center justify-center w-20 h-20 bg-[#DFF898]/10 rounded-full mb-6">
               <Sparkles className="w-10 h-10 text-[#DFF898]" />
             </div>
@@ -68,10 +85,11 @@ export function SummaryTab({ uploadedFiles, summaries, setSummaries }: SummaryTa
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsDialogOpen(true)}
-              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2"
+              disabled={isGenerating}
+              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Generate Summary</span>
+              <span>{isGenerating ? "Generating..." : "Generate Summary"}</span>
             </motion.button>
           </motion.div>
         ) : (

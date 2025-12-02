@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { DashboardContent } from "./DashboardContent";
+import { useAuth } from "../../hooks/useAuth";
+import { saveGeneratedContent, getGeneratedContentHistory } from "../../services/historyService";
 import type { UploadedFile, GeneratedContent, HistoryItem } from "../../types/types";
+import { useEffect } from "react";
 
 export function Dashboard() {
+  const { user } = useAuth();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent>({
     summaries: null,
@@ -11,19 +15,52 @@ export function Dashboard() {
     quiz: null,
   });
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [activeTab, setActiveTab] = useState<"summary" | "flashcards" | "quiz">("summary");
+  const [activeTab, setActiveTab] = useState<"summary" | "flashcards" | "quiz" | "mastery">("summary");
+  const [showHistory, setShowHistory] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const handleSaveHistory = () => {
-    if (generatedContent.summaries || generatedContent.flashcards || generatedContent.quiz) {
-      const newHistoryItem: HistoryItem = {
-        id: Date.now().toString(),
-        name: `Session ${new Date().toLocaleString()}`,
-        content: { ...generatedContent, timestamp: new Date() },
-        timestamp: new Date(),
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (user) {
+        const fetchedHistory = await getGeneratedContentHistory(user.uid);
+        setHistory(fetchedHistory);
+      }
+    };
+    loadHistory();
+  }, [user]);
+
+  const handleSaveHistory = async () => {
+    if (!user) {
+      alert("Please sign in to save your progress");
+      return;
+    }
+
+    if (!generatedContent.summaries && !generatedContent.flashcards && !generatedContent.quiz) {
+      alert("Nothing to save. Please generate some content first.");
+      return;
+    }
+
+    setSaving(true);
+    
+    try {
+      const contentToSave: GeneratedContent = {
+        summaries: generatedContent.summaries,
+        flashcards: generatedContent.flashcards,
+        quiz: generatedContent.quiz,
       };
-      setHistory([newHistoryItem, ...history]);
-      // Here you would also save to Firebase
-      console.log("Saved to history:", newHistoryItem);
+      
+      // Save to Firebase
+      await saveGeneratedContent(user.uid, contentToSave);
+      
+      // Re-fetch history to ensure local state is synchronized with Firebase
+      const updatedHistory = await getGeneratedContentHistory(user.uid);
+      setHistory(updatedHistory);
+      alert("Progress saved successfully!");
+    } catch (error) {
+      console.error("Error saving to Firebase:", error);
+      alert("Failed to save progress. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -37,7 +74,9 @@ export function Dashboard() {
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
         history={history}
-        onLoadHistory={handleLoadHistory}
+        user={user}
+        setShowHistory={setShowHistory}
+        setActiveTab={setActiveTab}
       />
       <DashboardContent
         activeTab={activeTab}
@@ -46,6 +85,11 @@ export function Dashboard() {
         generatedContent={generatedContent}
         setGeneratedContent={setGeneratedContent}
         onSaveHistory={handleSaveHistory}
+        history={history}
+        onLoadHistory={handleLoadHistory}
+        showHistory={showHistory}
+        setShowHistory={setShowHistory}
+        saving={saving}
       />
     </div>
   );

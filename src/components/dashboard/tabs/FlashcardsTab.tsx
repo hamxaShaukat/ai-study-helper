@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, ChevronLeft, ChevronRight, RotateCcw, AlertCircle } from "lucide-react";
 import { PDFSelectionDialog } from "../PDFSelectionDialog";
+import { generateFlashcards } from "../../../services/geminiService";
 import type { UploadedFile, Flashcard } from "../../../types/types";
 
 interface FlashcardsTabProps {
@@ -14,36 +15,31 @@ export function FlashcardsTab({ uploadedFiles, flashcards, setFlashcards }: Flas
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (selectedFiles: UploadedFile[]) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    const mockFlashcards: Flashcard[] = [
-      {
-        front: "What is Machine Learning?",
-        back: "Machine Learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.",
-      },
-      {
-        front: "What is the difference between supervised and unsupervised learning?",
-        back: "Supervised learning uses labeled data to train models, while unsupervised learning finds patterns in unlabeled data.",
-      },
-      {
-        front: "What is a neural network?",
-        back: "A neural network is a series of algorithms that recognize underlying relationships in data through a process that mimics the way the human brain operates.",
-      },
-      {
-        front: "What is overfitting?",
-        back: "Overfitting occurs when a model learns the training data too well, including noise and outliers, leading to poor performance on new data.",
-      },
-      {
-        front: "What is cross-validation?",
-        back: "Cross-validation is a technique to assess how well a model generalizes to an independent dataset by partitioning the data into subsets.",
-      },
-    ];
-    
-    setFlashcards(mockFlashcards);
-    setCurrentIndex(0);
+    if (selectedFiles.length === 0) {
+      setError("Please select at least one PDF");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
     setIsFlipped(false);
+    try {
+      const combinedText = selectedFiles.map(f => f.text).join("\n\n");
+      const generatedFlashcards = await generateFlashcards(combinedText);
+      setFlashcards(generatedFlashcards);
+      setCurrentIndex(0);
+      setIsDialogOpen(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate flashcards";
+      setError(errorMessage);
+      console.error("Error generating flashcards:", err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const nextCard = () => {
@@ -76,6 +72,12 @@ export function FlashcardsTab({ uploadedFiles, flashcards, setFlashcards }: Flas
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center"
           >
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
             <div className="inline-flex items-center justify-center w-20 h-20 bg-[#DFF898]/10 rounded-full mb-6">
               <Sparkles className="w-10 h-10 text-[#DFF898]" />
             </div>
@@ -87,10 +89,11 @@ export function FlashcardsTab({ uploadedFiles, flashcards, setFlashcards }: Flas
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsDialogOpen(true)}
-              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2"
+              disabled={isGenerating}
+              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Generate Flashcards</span>
+              <span>{isGenerating ? "Generating..." : "Generate Flashcards"}</span>
             </motion.button>
           </motion.div>
         ) : (

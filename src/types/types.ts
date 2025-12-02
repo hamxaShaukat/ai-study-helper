@@ -24,7 +24,14 @@ export interface GeneratedContent {
   summaries: Summaries | null;
   flashcards: Flashcard[] | null;
   quiz: Quiz | null;
-  timestamp?: Date;
+  timestamp?: Date; // Add optional timestamp
+}
+
+export interface MasteryProgress {
+  score: number;
+  attempts: number;
+  timestamp: Date;
+  documentNames: string[];
 }
 
 export interface UploadedFile {

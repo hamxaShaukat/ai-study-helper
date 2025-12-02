@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, CheckCircle, XCircle, RotateCcw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, CheckCircle, XCircle, RotateCcw, AlertCircle } from "lucide-react";
 import { PDFSelectionDialog } from "../PDFSelectionDialog";
+import { generateQuiz } from "../../../services/geminiService";
 import type { UploadedFile, Quiz } from "../../../types/types";
 
 interface QuizTabProps {
@@ -16,54 +17,32 @@ export function QuizTab({ uploadedFiles, quiz, setQuiz }: QuizTabProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [showResults, setShowResults] = useState(false);
   const [quizType, setQuizType] = useState<"mcq" | "short">("mcq");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async (selectedFiles: UploadedFile[]) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    
-    const mockQuiz: Quiz = {
-      mcqs: [
-        {
-          question: "What is the primary purpose of machine learning?",
-          options: [
-            "To replace human intelligence",
-            "To enable systems to learn from data",
-            "To create video games",
-            "To design websites",
-          ],
-          answer: "To enable systems to learn from data",
-        },
-        {
-          question: "Which of the following is NOT a type of machine learning?",
-          options: [
-            "Supervised Learning",
-            "Unsupervised Learning",
-            "Reinforcement Learning",
-            "Quantum Learning",
-          ],
-          answer: "Quantum Learning",
-        },
-        {
-          question: "What does AI stand for?",
-          options: [
-            "Automated Intelligence",
-            "Artificial Intelligence",
-            "Advanced Information",
-            "Algorithmic Integration",
-          ],
-          answer: "Artificial Intelligence",
-        },
-      ],
-      short_questions: [
-        "Explain the difference between supervised and unsupervised learning.",
-        "What are the main challenges in implementing machine learning systems?",
-        "Describe a real-world application of artificial intelligence.",
-      ],
-    };
-    
-    setQuiz(mockQuiz);
-    setCurrentQuestion(0);
-    setSelectedAnswers({});
-    setShowResults(false);
+    if (selectedFiles.length === 0) {
+      setError("Please select at least one PDF");
+      return;
+    }
+
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const combinedText = selectedFiles.map(f => f.text).join("\n\n");
+      const generatedQuiz = await generateQuiz(combinedText);
+      setQuiz(generatedQuiz);
+      setCurrentQuestion(0);
+      setSelectedAnswers({});
+      setShowResults(false);
+      setIsDialogOpen(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to generate quiz";
+      setError(errorMessage);
+      console.error("Error generating quiz:", err);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSelectAnswer = (answer: string) => {
@@ -107,6 +86,12 @@ export function QuizTab({ uploadedFiles, quiz, setQuiz }: QuizTabProps) {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center"
           >
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            )}
             <div className="inline-flex items-center justify-center w-20 h-20 bg-[#DFF898]/10 rounded-full mb-6">
               <Sparkles className="w-10 h-10 text-[#DFF898]" />
             </div>
@@ -118,10 +103,11 @@ export function QuizTab({ uploadedFiles, quiz, setQuiz }: QuizTabProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsDialogOpen(true)}
-              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2"
+              disabled={isGenerating}
+              className="bg-[#DFF898] text-[#1C1C1E] px-8 py-4 rounded-lg hover:bg-[#DFF898]/90 transition-all inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="w-5 h-5" />
-              <span>Generate Quiz</span>
+              <span>{isGenerating ? "Generating..." : "Generate Quiz"}</span>
             </motion.button>
           </motion.div>
         ) : (

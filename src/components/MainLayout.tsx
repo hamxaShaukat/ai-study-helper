@@ -1,7 +1,6 @@
 import React from 'react';
 import UserProfile from './UserProfile';
 import AuthModal from './AuthModal';
-import { useAuth } from '../hooks/useAuth';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -11,8 +10,7 @@ interface MainLayoutProps {
   setError: (error: string | null) => void;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, view, setView, error, setError }) => {
-  const { user, showAuthModal, closeAuthModal } = useAuth();
+const MainLayout: React.FC<MainLayoutProps> = ({ children, error, setError }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex flex-col font-sans relative overflow-hidden">
@@ -36,14 +34,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, view, setView, error,
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              {user && (
-                <button 
-                  onClick={() => setView("history")}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  View History
-                </button>
-              )}
               <UserProfile />
             </div>
           </div>
@@ -70,7 +60,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, view, setView, error,
       </main>
       
       {/* Auth Modal */}
-      <AuthModal isOpen={showAuthModal} onClose={closeAuthModal} />
+      <AuthModal />
       
       {/* Enhanced Error Notification */}
       {error && (

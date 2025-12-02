@@ -24,7 +24,7 @@ interface AuthContextType {
   closeAuthModal: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -45,7 +45,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [autoModalShown, setAutoModalShown] = useState(false);
 
   useEffect(() => {
+    // Initialize auth state listener
+    let isMounted = true;
+    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!isMounted) return;
+      
       setUser(user);
       setLoading(false);
 
@@ -53,31 +58,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!user && !autoModalShown) {
         console.log('Setting up auto-modal timer...');
         const timer = setTimeout(() => {
-          console.log('Auto-modal timer triggered - showing modal');
-          setShowAuthModal(true);
-          setAutoModalShown(true);
+          if (isMounted) {
+            console.log('Auto-modal timer triggered - showing modal');
+            setShowAuthModal(true);
+            setAutoModalShown(true);
+          }
         }, 5000); // 5 seconds
 
         return () => clearTimeout(timer);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [autoModalShown]);
-
-  // Alternative approach: Show modal after initial load
-  useEffect(() => {
-    if (!loading && !user && !autoModalShown) {
-      console.log('App loaded, setting auto-modal...');
-      const timer = setTimeout(() => {
-        console.log('Showing auto-modal after delay');
-        setShowAuthModal(true);
-        setAutoModalShown(true);
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [loading, user, autoModalShown]);
 
   const signIn = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
@@ -92,10 +88,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    setShowAuthModal(false);
-    return result;
+    try {
+      const provider = new GoogleAuthProvider();
+      // Set scopes to ensure proper permissions
+      provider.addScope("profile");
+      provider.addScope("email");
+      // Set custom parameters
+      provider.setCustomParameters({
+        prompt: "select_account", // Force account selection
+      });
+      const result = await signInWithPopup(auth, provider);
+      setShowAuthModal(false);
+      return result;
+    } catch (error: any) {
+      // Re-throw with better error messages
+      if (error.code === "auth/popup-closed-by-user") {
+        throw new Error("Sign-in was cancelled");
+      } else if (error.code === "auth/popup-blocked") {
+        throw new Error("Pop-up was blocked. Please allow pop-ups for this site and try again.");
+      } else if (error.code === "auth/operation-not-supported-in-this-environment") {
+        throw new Error("Google Sign-In is not supported in this browser. Try Chrome, Firefox, or Safari.");
+      } else if (error.code === "auth/network-request-failed") {
+        throw new Error("Network error. Please check your internet connection and try again.");
+      } else {
+        throw error;
+      }
+    }
   };
 
   const logout = async () => {

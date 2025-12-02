@@ -1,22 +1,76 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { BookOpen, Mail, Lock, ArrowLeft, User } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BookOpen, Mail, Lock, ArrowLeft, User, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(isLogin ? "Login" : "Sign up", { email, password, name });
+    setError("");
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        if (!email || !password) {
+          setError("Please fill in all fields");
+          setIsLoading(false);
+          return;
+        }
+        await signIn(email, password);
+        navigate("/dashboard");
+      } else {
+        if (!email || !password || !name) {
+          setError("Please fill in all fields");
+          setIsLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setError("Password should be at least 6 characters");
+          setIsLoading(false);
+          return;
+        }
+        await signUp(email, password);
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed. Please try again.");
+      console.error("Auth error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleAuth = () => {
-    console.log("Google auth");
+  const handleGoogleAuth = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate("/dashboard");
+    } catch (err: any) {
+      // Check for specific Google Sign-In errors
+      if (err.code === "auth/popup-closed-by-user") {
+        setError("Sign-in cancelled");
+      } else if (err.code === "auth/popup-blocked") {
+        setError("Pop-up blocked. Please allow pop-ups and try again.");
+      } else if (err.code === "auth/operation-not-supported-in-this-environment") {
+        setError("Google Sign-In is not supported in this browser. Try a different browser or sign in with email.");
+      } else {
+        setError(err.message || "Google Sign-In failed. Please try again.");
+      }
+      console.error("Google auth error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -142,13 +196,27 @@ export function AuthPage() {
             </div>
 
             <div className="relative z-10">
+              {/* Error Message */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-red-300">{error}</p>
+                </motion.div>
+              )}
+
               {/* Google Auth Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleGoogleAuth}
+                disabled={isLoading}
                 type="button"
-                className="w-full bg-white text-[#1C1C1E] py-4 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-3 mb-6"
+                className="w-full bg-white text-[#1C1C1E] py-4 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-3 mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -265,9 +333,10 @@ export function AuthPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  className="w-full bg-[#DFF898] text-[#1C1C1E] py-4 rounded-xl hover:bg-[#DFF898]/90 transition-all"
+                  disabled={isLoading}
+                  className="w-full bg-[#DFF898] text-[#1C1C1E] py-4 rounded-xl hover:bg-[#DFF898]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isLogin ? "Sign In" : "Create Account"}
+                  {isLoading ? "Loading..." : (isLogin ? "Sign In" : "Create Account")}
                 </motion.button>
               </form>
 

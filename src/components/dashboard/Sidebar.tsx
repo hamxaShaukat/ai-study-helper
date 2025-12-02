@@ -1,33 +1,90 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, History, FileText, Upload, X, BookOpen } from "lucide-react";
+import { LogOut } from "lucide-react";
+import * as pdfjsLib from "pdfjs-dist";
+import type { User } from "firebase/auth";
 import type { UploadedFile, HistoryItem } from "../../types/types";
+import { useAuth } from "../../hooks/useAuth";
+
+// Set up PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface SidebarProps {
   uploadedFiles: UploadedFile[];
   setUploadedFiles: (files: UploadedFile[]) => void;
   history: HistoryItem[];
-  onLoadHistory: (item: HistoryItem) => void;
+  user: User | null;
+  setShowHistory: (show: boolean) => void;
+  setActiveTab: (tab: "summary" | "flashcards" | "quiz" | "mastery") => void;
 }
 
-export function Sidebar({ uploadedFiles, setUploadedFiles, history, onLoadHistory }: SidebarProps) {
-  const [isHistoryOpen, setIsHistoryOpen] = useState(true);
+export function Sidebar({
+  uploadedFiles,
+  setUploadedFiles,
+  history,
+  user,
+  setShowHistory,
+  setActiveTab,
+}: SidebarProps) {
   const [isPdfsOpen, setIsPdfsOpen] = useState(true);
+  const { logout } = useAuth();
+
+  const extractPdfText = async (arrayBuffer: ArrayBuffer): Promise<string> => {
+    try {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(" ");
+        fullText += pageText + "\n";
+      }
+
+      return fullText;
+    } catch (error) {
+      console.error("Error extracting PDF text:", error);
+      return "";
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach((file) => {
         const reader = new FileReader();
-        reader.onload = (event) => {
-          const text = event.target?.result as string;
-          const newFile: UploadedFile = {
-            name: file.name,
-            text: text,
-          };
-          setUploadedFiles([...uploadedFiles, newFile]);
+        reader.onload = async (event) => {
+          try {
+            let text = "";
+            const result = event.target?.result;
+
+            if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+              // Handle PDF files
+              text = await extractPdfText(result as ArrayBuffer);
+            } else {
+              // Handle text files
+              text = result as string;
+            }
+
+            const newFile: UploadedFile = {
+              name: file.name,
+              text: text,
+            };
+            setUploadedFiles([...uploadedFiles, newFile]);
+          } catch (error) {
+            console.error("Error processing file:", error);
+          }
         };
-        reader.readAsText(file);
+
+        // Use appropriate reading method based on file type
+        if (file.type === "application/pdf" || file.name.endsWith(".pdf")) {
+          reader.readAsArrayBuffer(file);
+        } else {
+          reader.readAsText(file);
+        }
       });
     }
   };
@@ -52,45 +109,60 @@ export function Sidebar({ uploadedFiles, setUploadedFiles, history, onLoadHistor
         </div>
       </div>
 
+      {/* User Profile Section */}
+      {user && (
+        <div className="p-4 border-b border-white/10 flex items-center gap-3">
+          {user.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[#DFF898] flex items-center justify-center text-[#1C1C1E] font-bold">
+              {user.displayName ? user.displayName[0] : user.email?.[0]?.toUpperCase()}
+            </div>
+          )}
+          <span className="text-white text-lg">
+            {user.displayName || user.email}
+          </span>
+          <button
+            onClick={logout}
+            className="ml-auto text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {/* History Section */}
         <div>
-          <button
-            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+          <button // View History button
+            onClick={() => setShowHistory(true)}
             className="w-full flex items-center justify-between text-white hover:text-[#DFF898] transition-colors p-2 rounded-lg hover:bg-white/5"
           >
             <div className="flex items-center gap-2">
               <History className="w-5 h-5" />
               <span>History</span>
             </div>
-            {isHistoryOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            <ChevronRight className="w-4 h-4" />
           </button>
 
-          <AnimatePresence>
-            {isHistoryOpen && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="ml-7 mt-2 space-y-1"
-              >
-                {history.length === 0 ? (
-                  <p className="text-gray-500 text-sm p-2">No history yet</p>
-                ) : (
-                  history.map((item) => (
-                    <motion.button
-                      key={item.id}
-                      whileHover={{ x: 5 }}
-                      onClick={() => onLoadHistory(item)}
-                      className="w-full text-left text-sm text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors truncate"
-                    >
-                      {item.name}
-                    </motion.button>
-                  ))
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <button // Road towards Mastery button
+            onClick={() => {
+              setShowHistory(false);
+              setActiveTab("mastery");
+            }}
+            className="w-full flex items-center justify-between text-white hover:text-[#DFF898] transition-colors p-2 rounded-lg hover:bg-white/5"
+          >
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5" />
+              <span>Road towards Mastery</span>
+            </div>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
         </div>
 
         {/* PDFs Section */}

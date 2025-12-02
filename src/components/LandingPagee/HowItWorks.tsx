@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import { Upload, Wand2, GraduationCap } from "lucide-react";
 
 const steps = [
