@@ -2,7 +2,7 @@ import {
   db
 } from '../lib/firebase';
 import {
-  collection, query, orderBy, limit, getDocs, doc, runTransaction, serverTimestamp, addDoc
+  collection, query, orderBy, limit, getDocs, serverTimestamp, addDoc
 } from 'firebase/firestore';
 import type { MasteryProgress } from '../types/types';
 
