@@ -87,3 +87,12 @@ export async function generateQuiz(text: string): Promise<Quiz> {
   const jsonString = response?.text?.trim() ?? "";
   return JSON.parse(jsonString) as Quiz;
 }
+
+export async function chatWithGemini(prompt: string, context: string): Promise<string> {
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: `Given the following context, answer the user's question. If the question is not relevant to the context, politely decline to answer.\n\nContext: ${context}\n\nQuestion: ${prompt}\n\nAnswer:`,
+  });
+  
+  return response?.text?.trim() ?? "I'm sorry, I couldn't generate a response.";
+}
