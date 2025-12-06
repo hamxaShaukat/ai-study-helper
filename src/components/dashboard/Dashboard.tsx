@@ -5,6 +5,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { saveGeneratedContent, getGeneratedContentHistory } from "../../services/historyService";
 import type { UploadedFile, GeneratedContent, HistoryItem } from "../../types/types";
 import { useEffect } from "react";
+import { FloatingChatbot } from "../FloatingChatbot";
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -91,6 +92,7 @@ export function Dashboard() {
         setShowHistory={setShowHistory}
         saving={saving}
       />
+      <FloatingChatbot uploadedFiles={uploadedFiles} />
     </div>
   );
 }
